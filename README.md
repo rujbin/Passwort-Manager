@@ -1,3 +1,4 @@
+Ja, ich kann das! Hier ist der Text im README-Format:
 Passwort-Manager
 Sicherer Passwort-Manager in Python
 Überblick

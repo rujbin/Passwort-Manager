@@ -136,7 +136,7 @@ def main():
 
                     if pm.save_password(website, username, password):
                         print("\n✓ Passwort erfolgreich gespeichert!")
-                                        input("\nDrücken Sie Enter zum Fortfahren...")
+                    input("\nDrücken Sie Enter zum Fortfahren...")
 
                 elif choice == "2":
                     passwords = pm.view_passwords()

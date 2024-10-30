@@ -83,11 +83,10 @@ class PasswordManager:
             self.key = self.generate_key(master_password)
 
     def save_password(self, website, username, password):
-        if not all([website, username, password]):
-            raise ValueError("Alle Felder müssen ausgefüllt sein")
-
+        # Verschlüssle das Passwort
         nonce, tag, ciphertext = self.encrypt_password(password)
 
+        # Speichere die verschlüsselten Daten in der Datenbank
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -100,10 +99,17 @@ class PasswordManager:
     def view_passwords(self):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM passwords ORDER BY website")
-            return [(row[1], row[2],
-                     self.decrypt_password(row[3], row[4], row[5]))
-                    for row in cursor.fetchall()]
+            cursor.execute("SELECT website, username, nonce, tag, ciphertext FROM passwords ORDER BY website")
+            rows = cursor.fetchall()  # <--- Hier wird rows definiert
+
+            # Entschlüssle die Daten
+            decrypted_passwords = []
+            for row in rows:
+                website, username, nonce, tag, ciphertext = row
+                password = self.decrypt_password(nonce, tag, ciphertext)
+                decrypted_passwords.append((website, username, password))
+
+            return decrypted_passwords
 
 
 def clear_screen():

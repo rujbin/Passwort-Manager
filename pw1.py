@@ -4,6 +4,7 @@ import secrets
 from Crypto.Cipher import AES
 import hashlib
 from PyQt5 import QtWidgets, QtCore, QtGui
+from argon2 import PasswordHasher
 
 
 class PasswordManager:
@@ -14,8 +15,8 @@ class PasswordManager:
         self.iterations = 500000
 
     def generate_key(self, master_password):
-        if not self.salt:
-            self.salt = secrets.token_bytes(32)
+        ph = PasswordHasher()
+        self.key = ph.hash(master_password)
         return hashlib.pbkdf2_hmac('sha256', master_password.encode(), self.salt, self.iterations)
 
     def encrypt_password(self, password):

@@ -4,7 +4,7 @@ import secrets
 from Crypto.Cipher import AES
 import hashlib
 from PyQt5 import QtWidgets, QtCore, QtGui
-import getpass
+
 
 class PasswordManager:
     def __init__(self, db_path="passwords.db"):
@@ -12,21 +12,21 @@ class PasswordManager:
         self.salt = None
         self.key = None
         self.iterations = 500000
-    
+
     def generate_key(self, master_password):
         if not self.salt:
             self.salt = secrets.token_bytes(32)
         return hashlib.pbkdf2_hmac('sha256', master_password.encode(), self.salt, self.iterations)
-    
+
     def encrypt_password(self, password):
         cipher = AES.new(self.key, AES.MODE_GCM)
         ciphertext, tag = cipher.encrypt_and_digest(password.encode())
         return cipher.nonce, tag, ciphertext
-    
+
     def decrypt_password(self, nonce, tag, ciphertext):
         cipher = AES.new(self.key, AES.MODE_GCM, nonce=nonce)
         return cipher.decrypt_and_verify(ciphertext, tag).decode()
-    
+
     def create_db(self):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -73,6 +73,42 @@ class PasswordManager:
             return decrypted_passwords
 
 
+class PasswordDialog(QtWidgets.QDialog):
+    def __init__(self, passwords):
+        super().__init__()
+        self.setWindowTitle("Gespeicherte Passwörter")
+        self.setGeometry(200, 200, 400, 300)
+        self.layout = QtWidgets.QVBoxLayout()
+
+        self.table_widget = QtWidgets.QTableWidget()
+        self.table_widget.setColumnCount(3)
+        self.table_widget.setHorizontalHeaderLabels(["Website", "Benutzername", "Passwort"])
+        self.table_widget.setRowCount(len(passwords))
+
+        for row_idx, (website, username, password) in enumerate(passwords):
+            self.table_widget.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(website))
+            self.table_widget.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(username))
+            password_item = QtWidgets.QTableWidgetItem(password)
+            password_item.setFlags(password_item.flags() & ~QtCore.Qt.ItemIsEditable)  # Make it non-editable
+            self.table_widget.setItem(row_idx, 2, password_item)
+
+        self.copy_button = QtWidgets.QPushButton("Passwort kopieren")
+        self.copy_button.clicked.connect(self.copy_password)
+
+        self.layout.addWidget(self.table_widget)
+        self.layout.addWidget(self.copy_button)
+        self.setLayout(self.layout)
+
+    def copy_password(self):
+        selected_items = self.table_widget.selectedItems()
+        if selected_items:
+            password_item = selected_items[-1]  # Get the last selected item (password column)
+            if password_item:
+                password = password_item.text()
+                QtWidgets.QApplication.clipboard().setText(password)
+                QtWidgets.QMessageBox.information(self, "Kopiert", "Passwort in die Zwischenablage kopiert!")
+
+
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -82,30 +118,42 @@ class MainWindow(QtWidgets.QWidget):
     def initUI(self):
         self.setWindowTitle("Sicherer Passwort-Manager")
         self.setGeometry(100, 100, 600, 400)
+        self.setStyleSheet("background-color: #f4f4f4; font-family: Arial, sans-serif;")
 
         self.master_password_label = QtWidgets.QLabel("Master-Passwort:")
         self.master_password_input = QtWidgets.QLineEdit()
         self.master_password_input.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.master_password_input.setStyleSheet("border: 1px solid #ccc; padding: 5px; border-radius: 5px;")
 
         self.initialize_button = QtWidgets.QPushButton("Initialisieren")
+        self.initialize_button.setStyleSheet(
+            "background-color: #4CAF50; color: white; padding: 10px; border: none; border-radius: 5px;")
         self.initialize_button.clicked.connect(self.initialize)
 
         self.website_label = QtWidgets.QLabel("Website:")
         self.website_input = QtWidgets.QLineEdit()
+        self.website_input.setStyleSheet("border: 1px solid #ccc; padding: 5px; border-radius: 5px;")
 
         self.username_label = QtWidgets.QLabel("Benutzername:")
         self.username_input = QtWidgets.QLineEdit()
+        self.username_input.setStyleSheet("border: 1px solid #ccc; padding: 5px; border-radius: 5px;")
 
         self.password_label = QtWidgets.QLabel("Passwort:")
         self.password_input = QtWidgets.QLineEdit()
         self.password_input.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.password_input.setStyleSheet("border: 1px solid #ccc; padding: 5px; border-radius: 5px;")
 
         self.save_button = QtWidgets.QPushButton("Passwort speichern")
+        self.save_button.setStyleSheet(
+            "background-color: #2196F3; color: white; padding: 10px; border: none; border-radius: 5px;")
         self.save_button.clicked.connect(self.save_password)
 
         self.view_button = QtWidgets.QPushButton("Passwörter anzeigen")
+        self.view_button.setStyleSheet(
+            "background-color: #FF9800; color: white; padding: 10px; border: none; border-radius: 5px;")
         self.view_button.clicked.connect(self.view_passwords)
 
+        # Layouts
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.master_password_label)
         self.layout.addWidget(self.master_password_input)
@@ -138,8 +186,8 @@ class MainWindow(QtWidgets.QWidget):
         if not passwords:
             QtWidgets.QMessageBox.information(self, "Passwörter", "Keine Passwörter gespeichert.")
             return
-        message = "\n".join([f"Website: {w}, Benutzername: {u}, Passwort: {p}" for w, u, p in passwords])
-        QtWidgets.QMessageBox.information(self, "Gespeicherte Passwörter", message)
+        dialog = PasswordDialog(passwords)
+        dialog.exec_()  # Open the dialog modally
 
 
 def main():

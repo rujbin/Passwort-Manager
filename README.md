@@ -26,12 +26,3 @@ SQLite-Datenbank
 Crypto-Bibliothek
 
 Getpass-Bibliothek
-
-
-Sicherheit
-
-Der Passwort-Manager verwendet eine sichere Verschlüsselung von Passwörtern mittels AES-256.
-
-Der Passwort-Manager verwendet einen sicheren Salt-Wert für die Passwort-Hashing.
-
-Der Passwort-Manager speichert die Passwörter in einer SQLite-Datenbank, die verschlüsselt ist.

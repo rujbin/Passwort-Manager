@@ -100,13 +100,15 @@ class PasswordDialog(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
     def copy_password(self):
-        selected_items = self.table_widget.selectedItems()
-        if selected_items:
-            password_item = selected_items[-1]  # Get the last selected item (password column)
+        selected_row = self.table_widget.currentRow()
+        if selected_row >= 0:  # Check if a row is selected
+            password_item = self.table_widget.item(selected_row, 2)  # Get the password item of the selected row
             if password_item:
                 password = password_item.text()
                 QtWidgets.QApplication.clipboard().setText(password)
                 QtWidgets.QMessageBox.information(self, "Kopiert", "Passwort in die Zwischenablage kopiert!")
+        else:
+            QtWidgets.QMessageBox.warning(self, "Fehler", "Bitte wählen Sie eine Zeile aus.")
 
 
 class MainWindow(QtWidgets.QWidget):

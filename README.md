@@ -10,7 +10,7 @@ von Passwörtern.
 Funktionen
 Sichere Speicherung von Passwörtern in einer SQLite-Datenbank
 
-Einfache Benutzeroberfläche für die Eingabe und Anzeige von Passwörtern
+Einfache Benutzeroberfläche für die Eingabe und Anzeige von Passwörtern ( To Do)
 
 Sichere Verschlüsselung von Passwörtern mittels AES-256
 
